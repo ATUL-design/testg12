@@ -1,3 +1,4 @@
+---
 name: Add Service Account as member to GCP  group
 on:
   workflow_dispatch:
@@ -6,7 +7,7 @@ on:
         type: choice
         description: Select the resource
         options:
-        - group
+          - group
       resource_id:
         description: Group ID
         required: true
@@ -27,15 +28,17 @@ jobs:
         id: gcp-auth
         uses: google-github-actions/auth@v2
         with:
-          create_credentials_file: 'true'
-          token_format: 'access_token'
+          create_credentials_file: "true"
+          token_format: access_token
           workload_identity_provider: projects/442242090848/locations/global/workloadIdentityPools/githubaction/providers/saas-resource-management
           service_account: svc-saas-resource-deployer@gcp-koss01.iam.gserviceaccount.com
-          access_token_lifetime: 3600s      
+          access_token_lifetime: 3600s
       - name: Add-Service-Account-as-member-to-GCP-group
-        run: |
+        run: >
           if [ "${{ inputs.resource_type }}" == 'Group ID' ]; then
-	  gcloud identity groups memberships add --group-email="input.group-ID" --member-email="inputs.service_account" --dry-run
+
+          gcloud identity groups memberships add --group-email="input.group-ID" --member-email="inputs.service_account" --dry-run
+
           else
             echo "This is an unknown event"
           fi
