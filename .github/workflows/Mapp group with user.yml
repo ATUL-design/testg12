@@ -35,7 +35,7 @@ jobs:
       - name: Add-Service-Account-as-member-to-GCP-group
         run: |
           if [ "${{ inputs.resource_type }}" == 'Group ID' ]; then
-		 gcloud identity groups memberships add --group-email="input.group-ID" --member-email="inputs.service_account" --dry-run
+          gcloud identity groups memberships add --group-email="input.group-ID" --member-email="inputs.service_account" --dry-run
           else
             echo "This is an unknown event"
           fi
