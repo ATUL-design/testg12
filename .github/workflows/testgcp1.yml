@@ -1,3 +1,4 @@
+---
 name: Add IAM Binding to GCP Resource
 on:
   workflow_dispatch:
@@ -6,9 +7,23 @@ on:
         type: choice
         description: Select the resource
         options:
-        - organization
-        - folder
-        - project
+          - organization
+          - folder
+          - project
+      projects:
+        type: multi-choice
+        description: Select one or more projects
+        options:
+          - project1
+          - project2
+          - project3
+      folder:
+        type: multi-choice
+        description: Select one or more projects
+        options:
+          - folder1
+          - folder2
+          - folder3
       resource_id:
         description: Resource ID
         required: true
@@ -32,13 +47,13 @@ jobs:
         id: gcp-auth
         uses: google-github-actions/auth@v2
         with:
-          create_credentials_file: 'true'
-          token_format: 'access_token'
+          create_credentials_file: "true"
+          token_format: access_token
           workload_identity_provider: projects/442242090848/locations/global/workloadIdentityPools/githubaction/providers/saas-resource-management
           service_account: svc-saas-resource-deployer@gcp-koss01.iam.gserviceaccount.com
-          access_token_lifetime: 3600s      
+          access_token_lifetime: 3600s
       - name: Add-IAM-Binding-to-GCP-Resource
-        run: |
+        run: >
           if [ "${{ inputs.resource_type }}" == 'organization' ]; then
             gcloud organizations add-iam-policy-binding ${{ inputs.resource_id}} --member=serviceAccount:${{ inputs.service_account }} --role=${{ inputs.iam_role }} --condition=None
           elif [ "${{ inputs.resource_type }}" == 'folder' ]; then
