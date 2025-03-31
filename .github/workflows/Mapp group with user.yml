@@ -12,7 +12,7 @@ on:
         description: Group ID
         required: true
       service_account:
-        description: group email
+        description: service account email
         required: true
 permissions:
   contents: read
