@@ -1,0 +1,67 @@
+name: Add IAM Binding group to GCP Resource
+on:
+  workflow_dispatch:
+    inputs:
+      resource_type:
+        type: choice
+        description: Select the resource
+        options:
+        - organization
+        - folder
+        - project
+ projects:
+    type: multi-choice
+    description: Select one or more projects
+    options:
+      - project1
+      - project2
+      - project3
+	    - project4
+	  
+ folder:
+    type: multi-choice
+    description: Select one or more projects
+    options:
+      - folder1
+      - folder2
+      - folder3
+	    - folder4
+      resource_id:
+        description: Resource ID
+        required: true
+      service_account:
+        description: group email
+        required: true
+      iam_role:
+        description: IAM role
+        required: true
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+  pull-requests: write
+jobs:
+  Add-IAM-Binding-to-GCP-Resource:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Authenticate to GCP
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          create_credentials_file: 'true'
+          token_format: 'access_token'
+          workload_identity_provider: projects/442242090848/locations/global/workloadIdentityPools/githubaction/providers/saas-resource-management
+          service_account: svc-saas-resource-deployer@gcp-koss01.iam.gserviceaccount.com
+          access_token_lifetime: 3600s      
+      - name: Add-IAM-Binding-to-GCP-Resource
+        run: |
+          if [ "${{ inputs.resource_type }}" == 'organization' ]; then
+            gcloud organizations add-iam-policy-binding ${{ inputs.resource_id}} --member=group:${{ inputs.service_account }} --role=${{ inputs.iam_role }} --condition=None
+          elif [ "${{ inputs.resource_type }}" == 'folder' ]; then
+            gcloud resource-manager folders add-iam-policy-binding ${{ inputs.resource_id}} --member=group:${{ inputs.service_account }} --role=${{ inputs.iam_role }} --condition=None
+          elif [ "${{ inputs.resource_type }}" == 'project' ]; then
+            gcloud projects add-iam-policy-binding ${{ inputs.resource_id}} --member=group:${{ inputs.service_account }} --role=${{ inputs.iam_role }} --condition=None
+          else
+            echo "This is an unknown event"
+          fi
