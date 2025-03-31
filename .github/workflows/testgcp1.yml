@@ -9,7 +9,7 @@ on:
         - organization
         - folder
         - project
- projects:
+  projects:
     type: multi-choice
     description: Select one or more projects
     options:
