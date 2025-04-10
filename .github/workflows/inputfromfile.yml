@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      file_path:
+        description: "Path to the tree structure file"
+        required: true
+        default: "tree_structure.txt"
+
+jobs:
+  read-file:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Read tree structure file
+        id: read_tree
+        run: |
+          tree_structure=$(cat ${{ github.event.inputs.file_path }})
+          echo "::set-output name=tree_structure::$tree_structure"
+
+      - name: Use tree structure
+        run: |
+          echo "Tree structure:"
+          echo "${{ steps.read_tree.outputs.tree_structure }}"
