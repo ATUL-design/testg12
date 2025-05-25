@@ -1,0 +1,30 @@
+# Example: Creating a Workload Identity Pool and an OIDC Provider
+
+# ---
+# Resource: Workload Identity Pool
+# ---
+workloadIdentityPool:
+  name: "my-workload-identity-pool"
+  poolId: "my-unique-pool-id"
+  state: "ACTIVE" # Optional: Default is ACTIVE
+
+# ---
+# Resource: Workload Identity Pool Provider (OIDC Example)
+# ---
+workloadIdentityPoolProvider:
+  name: "my-oidc-provider"
+  displayName: "My OIDC Provider"
+  disabled: false # Optional: Default is false
+  oidc:
+    issuerUri: "https://your-oidc-issuer.example.com"
+    allowedAudiences:
+      - "your-audience-1"
+      - "your-audience-2"
+  attributeMapping:
+    google.subject: assertion.sub
+    attribute.email: assertion.email
+    attribute.group: assertion.groups
+  attributeCondition: "assertion.attribute_name == 'attribute_value'" # Optional
+
+  # Required: Reference to the Workload Identity Pool
+  #workloadIdentityPool: "projects/YOUR_PROJECT_NUMBER/locations/global/workloadIdentityPools/my-workload-identity-pool"
