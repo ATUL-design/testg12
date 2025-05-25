@@ -10,7 +10,15 @@ on:
         options:
           - dev
           - staging
-          - prod # Use with caution!
+          - prod
+      pool_id_suffix:
+        description: 'Suffix for the Workload Identity Pool ID'
+        required: true
+        type: choice
+        options:
+          - dev
+          - qa
+          - prod
       issuer_uri:
         description: 'OIDC Issuer URI'
         required: true
@@ -34,27 +42,33 @@ jobs:
 
     - name: Test WIF Creation (Dry Run)
       run: |
-        echo "Testing in ${{ github.event.inputs.environment }} environment..."
-        echo "Using Issuer URI: ${{ github.event.inputs.issuer_uri }}"
+        ENVIRONMENT="${{ github.event.inputs.environment }}"
+        POOL_ID_SUFFIX="${{ github.event.inputs.pool_id_suffix }}"
+        ISSUER_URI="${{ github.event.inputs.issuer_uri }}"
+        BASE_POOL_ID="my-wif-pool"
+        FULL_POOL_ID="${BASE_POOL_ID}-${POOL_ID_SUFFIX}"
+        PROVIDER_ID="my-oidc-provider-${POOL_ID_SUFFIX}"
 
-        POOL_ID="my-wif-pool-${{ github.event.inputs.environment }}"
-        PROVIDER_ID="my-oidc-provider-${{ github.event.inputs.environment }}"
+        echo "Testing in ${ENVIRONMENT} environment..."
+        echo "Using Pool ID Suffix: ${POOL_ID_SUFFIX}"
+        echo "Using Issuer URI: ${ISSUER_URI}"
+        echo "Full Pool ID will be: ${FULL_POOL_ID}"
 
-        echo "--- Dry Run: Creating Workload Identity Pool (${{ github.event.inputs.environment }}) ---"
-        gcloud iam workload-identity-pools create "${POOL_ID}" \
+        echo "--- Dry Run: Creating Workload Identity Pool (${ENVIRONMENT}) ---"
+        gcloud iam workload-identity-pools create "${FULL_POOL_ID}" \
           --project="${{ secrets.GCP_PROJECT_ID }}" \
-          --pool-id="${POOL_ID}-id" \
+          --pool-id="${FULL_POOL_ID}-id" # Appending -id for uniqueness
           --location="global" \
-          --display-name="WIF Pool (${{ github.event.inputs.environment }}) (Dry Run)" \
+          --display-name="WIF Pool (${ENVIRONMENT}-${POOL_ID_SUFFIX}) (Dry Run)" \
           --dry-run
 
-        echo "--- Dry Run: Creating Workload Identity Pool Provider (${{ github.event.inputs.environment }}) ---"
+        echo "--- Dry Run: Creating Workload Identity Pool Provider (${ENVIRONMENT}) ---"
         gcloud iam workload-identity-pools providers create-oidc "${PROVIDER_ID}" \
           --project="${{ secrets.GCP_PROJECT_ID }}" \
           --location="global" \
-          --pool="${POOL_ID}" \
-          --display-name="OIDC Provider (${{ github.event.inputs.environment }}) (Dry Run)" \
-          --issuer-uri="${{ github.event.inputs.issuer_uri }}" \
+          --pool="${FULL_POOL_ID}" \
+          --display-name="OIDC Provider (${ENVIRONMENT}-${POOL_ID_SUFFIX}) (Dry Run)" \
+          --issuer-uri="${ISSUER_URI}" \
           --attribute-mapping="google.subject=assertion.sub,attribute.email=assertion.email,attribute.group=assertion.groups" \
           --attribute-condition="assertion.attribute_name == 'attribute_value'" \
           --allowed-audiences="your-audience-1,your-audience-2" \
