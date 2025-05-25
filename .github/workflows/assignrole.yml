@@ -1,0 +1,65 @@
+name: Grant Access to Service Account
+
+on:
+  workflow_dispatch:
+    inputs:
+      service_account_email:
+        description: 'Email of the service account to grant access to'
+        required: true
+        type: string
+      role_to_grant:
+        description: 'The IAM role to grant (e.g., roles/storage.objectAdmin)'
+        required: true
+        type: string
+      resource_type:
+        description: 'Type of resource to grant access on (project, serviceAccount)'
+        required: true
+        type: choice
+        options:
+          - project
+          - serviceAccount
+      resource_id:
+        description: 'ID of the resource (project ID or service account email)'
+        required: true
+        type: string
+
+jobs:
+  grant_iam:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Google Cloud CLI
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_SA_KEY }} # Consider using WIF if this workflow needs access
+
+    - name: Grant IAM Role
+      run: |
+        SA_EMAIL="${{ github.event.inputs.service_account_email }}"
+        ROLE="${{ github.event.inputs.role_to_grant }}"
+        RESOURCE_TYPE="${{ github.event.inputs.resource_type }}"
+        RESOURCE_ID="${{ github.event.inputs.resource_id }}"
+        PROJECT="${{ secrets.GCP_PROJECT_ID }}"
+
+        echo "Granting role '${ROLE}' to service account '${SA_EMAIL}' on '${RESOURCE_TYPE}' '${RESOURCE_ID}' in project '${PROJECT}'"
+
+        if [ "$RESOURCE_TYPE" == "project" ]; then
+          gcloud projects add-iam-policy-binding "${RESOURCE_ID}" \
+            --member="serviceAccount:${SA_EMAIL}" \
+            --role="${ROLE}"
+          echo "Granted role '${ROLE}' to '${SA_EMAIL}' on project '${RESOURCE_ID}'"
+        elif [ "$RESOURCE_TYPE" == "serviceAccount" ]; then
+          gcloud iam service-accounts add-iam-policy-binding "${RESOURCE_ID}" \
+            --member="serviceAccount:${SA_EMAIL}" \
+            --role="${ROLE}"
+          echo "Granted role '${ROLE}' to '${SA_EMAIL}' on service account '${RESOURCE_ID}'"
+        else
+          echo "Unsupported resource type: ${RESOURCE_TYPE}"
+          exit 1
+        fi
