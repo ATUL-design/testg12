@@ -1,0 +1,45 @@
+name: Update Entitlements Dashboard
+on:
+  push:
+    paths:
+      - 'entitlements.yaml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate Markdown Table
+        run: |
+          # Simple python script to convert YAML to Markdown
+          python3 -c "
+          import yaml
+          with open('entitlements.yaml', 'r') as f:
+              data = yaml.safe_load(f)
+          
+          table = '| Project ID | Role | Members |\n| :--- | :--- | :--- |\n'
+          for p in data['projects']:
+              for e in p['entitlements']:
+                  members = ', '.join(e['members'])
+                  table += f'| {p[\"id\"]} | **{e[\"role\"]}** | {members} |\n'
+          
+          with open('README.md', 'r') as f:
+              content = f.read()
+          
+          import re
+          new_content = re.sub(r'.*?', 
+                               f'\n{table}\n', 
+                               content, flags=re.DOTALL)
+          
+          with open('README.md', 'w') as f:
+              f.write(new_content)
+          "
+
+      - name: Commit and Push
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add README.md
+          git commit -m "docs: update entitlements dashboard" || echo "No changes"
+          git push
