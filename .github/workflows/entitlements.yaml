@@ -1,0 +1,38 @@
+project_id: saas-shd-dev-core-gcp-mgt-admin
+environment: development
+owner_team: cloud-ops
+
+entitlements:
+  # The specific project you mentioned
+  - resource_name: "saas-shd-dev-core-gcp-mgt-admin"
+    resource_type: "gcp-project"
+    assignments:
+      - role: "roles/editor"
+        description: "Full access to most resources, allows deploying services."
+        members:
+          - "group:dev-leads@example.com"
+          - "serviceAccount:ci-cd-deployer@project-id.iam.gserviceaccount.com"
+
+      - role: "roles/monitoring.editor"
+        description: "Can create and modify monitoring dashboards and alerts."
+        members:
+          - "group:sre-team@example.com"
+          - "user:triage-lead@example.com"
+
+  # Additional Entitlement Example: Networking
+  - resource_name: "saas-shd-dev-network-vpc"
+    resource_type: "gcp-network"
+    assignments:
+      - role: "roles/compute.networkAdmin"
+        description: "Manage VPC networks and firewall rules."
+        members:
+          - "group:network-admins@example.com"
+
+  # Additional Entitlement Example: Security/Storage
+  - resource_name: "saas-shd-dev-logs-bucket"
+    resource_type: "gcs-bucket"
+    assignments:
+      - role: "roles/storage.objectViewer"
+        description: "Read-only access to security logs."
+        members:
+          - "group:security-auditors@example.com"
